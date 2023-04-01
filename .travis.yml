@@ -5,7 +5,7 @@ notifications:
 
 branches:
   only:
-    - master
+    - main
     - /releases\/.+/
 
 language: python
