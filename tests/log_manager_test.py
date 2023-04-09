@@ -1,7 +1,7 @@
 import os
 import logging.handlers
 import unittest
-from smtm import LogManager
+from meerkat import LogManager
 from unittest.mock import *
 
 
@@ -35,7 +35,7 @@ class LogManagerTests(unittest.TestCase):
         old_handler = None
         for handler in logger.handlers:
             if issubclass(type(handler), logging.handlers.RotatingFileHandler):
-                self.assertEqual(handler.baseFilename[-8:], "smtm.log")
+                self.assertEqual(handler.baseFilename[-11:], "meerkat.log")
                 has_RotatingFileHandler = True
                 old_handler = handler
         self.assertTrue(has_RotatingFileHandler)

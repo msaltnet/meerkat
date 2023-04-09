@@ -10,7 +10,7 @@ class LogManager:
     """
 
     LOG_FOLDER = "log"
-    LOG_FILE = LOG_FOLDER + "/smtm.log"
+    LOG_FILE = LOG_FOLDER + "/meerkat.log"
     LOG_FILE_SIZE = 2097152
     BACKUP_COUNT = 10
     try:
@@ -61,7 +61,7 @@ class LogManager:
         cls.STREAM_HANDLER.setLevel(level)
 
     @classmethod
-    def change_log_file(cls, log_file="smtm.log"):
+    def change_log_file(cls, log_file="meerkat.log"):
         """파일 핸들러의 로그 파일을 변경한다"""
         cls.LOG_FILE = f"{cls.LOG_FOLDER}/{log_file}"
         new_file_handler = RotatingFileHandler(
