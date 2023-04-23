@@ -5,6 +5,7 @@ Description for Package
 from .log_manager import LogManager
 from .fake_monitor import FakeMonitor
 from .fake_reporter import FakeReporter
+from .operator import Operator
 
-__all__ = ["LogManager", "FakeMonitor", "FakeReporter"]
+__all__ = ["LogManager", "FakeMonitor", "FakeReporter", "Operator"]
 __version__ = "1.1.0"
