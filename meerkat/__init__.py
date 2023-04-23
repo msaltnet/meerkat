@@ -3,6 +3,7 @@ Description for Package
 """
 
 from .log_manager import LogManager
+from .fake_monitor import FakeMonitor
 
 __all__ = [
     "LogManager",
