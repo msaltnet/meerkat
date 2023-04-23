@@ -1,11 +1,11 @@
-"""관심있는 데이터에서 필요한 정보를 모니터링 하는 클래스"""
+"""관심있는 데이터소스에서 필요한 데이터를 추출하여 제공하는 클래스"""
 
 from abc import ABCMeta, abstractmethod
 
 
 class Monitor(metaclass=ABCMeta):
     """
-    관심있는 데이터에서 필요한 정보를 모니터링 하는 클래스
+    관심있는 데이터소스에서 필요한 데이터를 추출하여 제공하는 클래스
     """
 
     @abstractmethod
@@ -35,11 +35,11 @@ class Monitor(metaclass=ABCMeta):
     @abstractmethod
     def set_config(self, config):
         """
-        모니터링에서 변경할 수 있는 설정 값의 설정
+        모니터에서 변경할 수 있는 설정 값의 설정
         """
 
     @abstractmethod
     def get_config_info(self) -> str:
         """
-        모니터링에서 변경할 수 있는 설정 값의 정보
+        모니터에서 변경할 수 있는 설정 값의 정보
         """

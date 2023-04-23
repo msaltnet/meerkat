@@ -1,5 +1,3 @@
-import os
-import logging.handlers
 import unittest
 from meerkat import FakeMonitor
 from unittest.mock import *

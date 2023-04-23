@@ -12,7 +12,6 @@ class FakeMonitor(Monitor):
     AVAILABLE_TYPE = ["A", "B", "C"]
 
     def __init__(self) -> None:
-        super().__init__()
         self.idx = 0
         self.type = "A"
         self.logger = LogManager.get_logger("FakeMonitor")
@@ -44,17 +43,17 @@ class FakeMonitor(Monitor):
 
     def set_config(self, config):
         """
-        모니터링에서 변경할 수 있는 설정 값의 설정
+        모니터에서 변경할 수 있는 설정 값의 설정
         """
         try:
             if config["type"] in self.AVAILABLE_TYPE:
                 self.type = config["type"]
         except (TypeError, KeyError) as error:
-            self.logger.print(f"Invalid config {error}")
+            self.logger.info(f"Invalid config {error}")
 
     def get_config_info(self):
         """
-        모니터링에서 변경할 수 있는 설정 값의 정보
+        모니터에서 변경할 수 있는 설정 값의 정보
         """
         type_string = ", ".join(self.AVAILABLE_TYPE)
 

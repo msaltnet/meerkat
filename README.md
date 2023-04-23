@@ -21,8 +21,8 @@ monitor
 
 reporter
 - get_report_message
-- set_parameter
-- get_parameter_info
+- set_config, 모니터링 설정
+- get_config_info, 모니터링 설정 정보
 
 analyzer
 - put_info
