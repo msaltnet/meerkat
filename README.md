@@ -32,9 +32,9 @@ operator
 - initialize
 - start / stop
 - get_heartbeat
-- get_result
-- get_parameter_info
-- set_parameter
+- excute_monitoring
+- get_config_info
+- set_config
 
 controller
 - 시작 / 정지
