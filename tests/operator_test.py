@@ -31,6 +31,7 @@ class OperatorTests(unittest.TestCase):
         operator.interval = 1
         operator.initialize(monitor_mock, reporter_mock, alarm_handler, analyzer_mock)
         operator.start()
+        self.assertTrue(operator.is_running)
 
         time.sleep(1)
         monitor_mock.get_info.assert_called()
@@ -50,6 +51,9 @@ class OperatorTests(unittest.TestCase):
         self.assertEqual(3, len(monitor_mock.get_info.call_args_list))
         self.assertEqual(3, len(reporter_mock.get_report_message.call_args_list))
         self.assertEqual(3, len(analyzer_mock.put_info.call_args_list))
+        operator.stop()
+        time.sleep(1)
+        self.assertFalse(operator.is_running)
 
     def test_start_should_call_alarm_handler_when_not_None_result_is_returned(self):
         operator = Operator()
@@ -63,6 +67,7 @@ class OperatorTests(unittest.TestCase):
         operator.interval = 1
         operator.initialize(monitor_mock, reporter_mock, alarm_handler, analyzer_mock)
         operator.start()
+        self.assertTrue(operator.is_running)
 
         time.sleep(1)
         monitor_mock.get_info.assert_called()
@@ -83,3 +88,6 @@ class OperatorTests(unittest.TestCase):
         self.assertEqual(3, len(monitor_mock.get_info.call_args_list))
         self.assertEqual(3, len(reporter_mock.get_report_message.call_args_list))
         self.assertEqual(6, len(analyzer_mock.put_info.call_args_list))
+        operator.stop()
+        time.sleep(1)
+        self.assertFalse(operator.is_running)

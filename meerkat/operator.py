@@ -1,6 +1,5 @@
 """데이터 소스에서 추출된 데이터를 기반으로 알림을 생성하는 시스템을 운영하는 클래스"""
 
-import time
 import threading
 from datetime import datetime
 from .worker import Worker
@@ -91,6 +90,15 @@ class Operator:
         """
         모니터링 알림 시스템을 중지
         """
+        self.logger.info("===== Stop operating =====")
+        if self.timer is not None:
+            self.timer.cancel()
+
+        def on_terminated():
+            self.is_running = False
+
+        self.worker.register_on_terminated(on_terminated)
+        self.worker.stop()
 
     def get_heartbeat(self):
         """

@@ -1,5 +1,5 @@
 import unittest
-from smtm import Worker
+from meerkat import Worker
 from unittest.mock import *
 
 
