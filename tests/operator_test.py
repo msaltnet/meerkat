@@ -12,6 +12,8 @@ class OperatorTests(unittest.TestCase):
         pass
 
     def test_get_monitor_info_return_correct_info(self):
+        """Test get_monitor_info() return correct info"""
+
         operator = Operator()
         operator.initialize("mango", "orange", "handler", "apple")
         self.assertEqual("mango", operator.monitor)
@@ -20,6 +22,8 @@ class OperatorTests(unittest.TestCase):
         self.assertEqual("apple", operator.analyzer)
 
     def test_start_should_call_monitor_get_info_and_report_get_report_message(self):
+        """Test start() should call monitor.get_info() and report.get_report_message()"""
+
         operator = Operator()
         monitor_mock = MagicMock()
         monitor_mock.get_info = MagicMock(return_value="banana")
@@ -56,6 +60,8 @@ class OperatorTests(unittest.TestCase):
         self.assertFalse(operator.is_running)
 
     def test_start_should_call_alarm_handler_when_not_None_result_is_returned(self):
+        """Test start() should call alarm_handler when not None result is returned"""
+
         operator = Operator()
         monitor_mock = MagicMock()
         monitor_mock.get_info = MagicMock(return_value="banana")

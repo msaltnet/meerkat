@@ -13,9 +13,13 @@ class LogManagerTests(unittest.TestCase):
         pass
 
     def test_create_log_directory_correctly(self):
+        """LogManager should create log directory when it is not exist."""
+
         self.assertTrue(os.path.exists(LogManager.LOG_FOLDER))
 
     def test_get_logger_return_logger_with_handler(self):
+        """Test get_logger() return logger with handler"""
+
         self.assertEqual("mango" in LogManager.REGISTERED_LOGGER, False)
         logger = LogManager.get_logger("mango")
         self.assertEqual("mango" in LogManager.REGISTERED_LOGGER, True)
@@ -23,6 +27,8 @@ class LogManagerTests(unittest.TestCase):
         self.assertEqual(logger, logger2)
 
     def test_set_stream_level_call_stream_handler_setLevel(self):
+        """Test set_stream_level() call stream handler setLevel()"""
+
         original = LogManager.STREAM_HANDLER
         LogManager.STREAM_HANDLER = MagicMock()
         LogManager.set_stream_level(50)
@@ -30,6 +36,8 @@ class LogManagerTests(unittest.TestCase):
         LogManager.STREAM_HANDLER = original
 
     def test_change_log_file_should_change_file_handler(self):
+        """Test change_log_file() should change file handler"""
+
         logger = LogManager.get_logger("orange")
         has_RotatingFileHandler = False
         old_handler = None
