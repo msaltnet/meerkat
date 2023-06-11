@@ -117,7 +117,16 @@ class Operator:
         모니터와 리포터의 변경할 수 있는 설정 값의 설정 정보를 조회
         monitor_config이 True이면 모니터의 설정 정보를 조회
         monitor_config이 False이면 리포터의 설정 정보를 조회
+        return: 설정 정보를 담은 문자열
         """
+        if monitor_config:
+            if self.monitor is None:
+                return "invalid monitor"
+            return self.monitor.get_config_info()
+        else:
+            if self.reporter is None:
+                return "invalid reporter"
+            return self.reporter.get_config_info()
 
     def set_config(self, config, monitor_config=True):
         """

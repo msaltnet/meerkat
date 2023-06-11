@@ -107,3 +107,42 @@ class OperatorTests(unittest.TestCase):
         operator.initialize(mock_monitor, "orange", "handler", "apple")
         self.assertEqual("mango", operator.get_heartbeat())
         mock_monitor.get_heartbeat.assert_called()
+
+    def test_get_heartbeat_should_return_False_when_operator_is_NOT_initialized(self):
+        """Test get_heartbeat() should return False when operator is NOT initialized"""
+
+        operator = Operator()
+        self.assertFalse(operator.get_heartbeat())
+
+    def test_get_config_info_should_return_config_info_of_monitor_when_monitor_config_True(self):
+        """Test get_config_info() should return config_info when monitor.config is True"""
+
+        mock_monitor = MagicMock()
+        mock_monitor.get_config_info = MagicMock(return_value="mango")
+        mock_reporter = MagicMock()
+        mock_reporter.get_config_info = MagicMock(return_value="orange")
+        operator = Operator()
+        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
+        self.assertEqual("mango", operator.get_config_info(monitor_config=True))
+        mock_monitor.get_config_info.assert_called()
+        mock_reporter.get_config_info.assert_not_called()
+
+    def test_get_config_info_should_return_config_info_of_reporter_when_monitor_config_False(self):
+        """Test get_config_info() should return config_info when monitor.config is False"""
+
+        mock_monitor = MagicMock()
+        mock_monitor.get_config_info = MagicMock(return_value="mango")
+        mock_reporter = MagicMock()
+        mock_reporter.get_config_info = MagicMock(return_value="orange")
+        operator = Operator()
+        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
+        self.assertEqual("orange", operator.get_config_info(monitor_config=False))
+        mock_monitor.get_config_info.assert_not_called()
+        mock_reporter.get_config_info.assert_called()
+
+    def test_get_config_info_should_return_invalid_state_when_operator_is_NOT_initialized(self):
+        """Test get_config_info() should return False when operator is NOT initialized"""
+
+        operator = Operator()
+        self.assertEqual("invalid monitor", operator.get_config_info(monitor_config=True))
+        self.assertEqual("invalid reporter", operator.get_config_info(monitor_config=False))
