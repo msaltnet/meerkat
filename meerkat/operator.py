@@ -22,6 +22,7 @@ class Operator:
         self.logger = LogManager.get_logger("Operator")
         self.on_exception = on_exception
         self.timer_expired_time = None
+        self.timer = None
 
     def initialize(self, monitor, reporter, alarm_handler, analyzer):
         """
@@ -103,14 +104,24 @@ class Operator:
     def get_heartbeat(self):
         """
         모니터링이 정상적으로 진행되고 있는지 확인
+
+        return : True or False
         """
+        if self.monitor is None:
+            return False
+
+        return self.monitor.get_heartbeat()
 
     def get_config_info(self, monitor_config=True):
         """
         모니터와 리포터의 변경할 수 있는 설정 값의 설정 정보를 조회
+        monitor_config이 True이면 모니터의 설정 정보를 조회
+        monitor_config이 False이면 리포터의 설정 정보를 조회
         """
 
     def set_config(self, config, monitor_config=True):
         """
         모니터와 리포터의 변경할 수 있는 설정 값의 설정
+        monitor_config이 True이면 모니터의 설정을 변경
+        monitor_config이 False이면 리포터의 설정을 변경
         """

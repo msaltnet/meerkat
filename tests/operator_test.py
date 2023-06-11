@@ -97,3 +97,13 @@ class OperatorTests(unittest.TestCase):
         operator.stop()
         time.sleep(1)
         self.assertFalse(operator.is_running)
+
+    def test_get_heartbeat_should_return_heartbeat_state(self):
+        """Test get_heartbeat() should return heartbeat_state"""
+
+        mock_monitor = MagicMock()
+        mock_monitor.get_heartbeat = MagicMock(return_value="mango")
+        operator = Operator()
+        operator.initialize(mock_monitor, "orange", "handler", "apple")
+        self.assertEqual("mango", operator.get_heartbeat())
+        mock_monitor.get_heartbeat.assert_called()
