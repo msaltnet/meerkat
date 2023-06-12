@@ -146,3 +146,36 @@ class OperatorTests(unittest.TestCase):
         operator = Operator()
         self.assertEqual("invalid monitor", operator.get_config_info(monitor_config=True))
         self.assertEqual("invalid reporter", operator.get_config_info(monitor_config=False))
+
+    def test_set_config_should_set_monitor_config_when_monitor_config_True(self):
+        """Test set_config() should set monitor.config when monitor_config is True"""
+
+        mock_monitor = MagicMock()
+        mock_monitor.set_config = MagicMock()
+        mock_reporter = MagicMock()
+        mock_reporter.set_config = MagicMock()
+        operator = Operator()
+        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
+        operator.set_config("mango", monitor_config=True)
+        mock_monitor.set_config.assert_called_with("mango")
+        mock_reporter.set_config.assert_not_called()
+
+    def test_set_config_should_set_reportor_config_when_monitor_config_False(self):
+        """Test set_config() should set reporter.config when monitor_config is False"""
+
+        mock_monitor = MagicMock()
+        mock_monitor.set_config = MagicMock()
+        mock_reporter = MagicMock()
+        mock_reporter.set_config = MagicMock()
+        operator = Operator()
+        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
+        operator.set_config("mango", monitor_config=False)
+        mock_monitor.set_config.assert_not_called()
+        mock_reporter.set_config.assert_called_with("mango")
+
+    def test_set_config_should_return_invalid_state_when_operator_is_NOT_initialized(self):
+        """Test set_config() should return False when operator is NOT initialized"""
+
+        operator = Operator()
+        self.assertEqual("invalid monitor", operator.set_config("mango", monitor_config=True))
+        self.assertEqual("invalid reporter", operator.set_config("mango", monitor_config=False))

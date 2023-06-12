@@ -131,6 +131,15 @@ class Operator:
     def set_config(self, config, monitor_config=True):
         """
         모니터와 리포터의 변경할 수 있는 설정 값의 설정
-        monitor_config이 True이면 모니터의 설정을 변경
-        monitor_config이 False이면 리포터의 설정을 변경
+        monitor_config이 True이면 모니터의 set_config를 호출
+        monitor_config이 False이면 리포터의 set_config를 호출
         """
+
+        if monitor_config:
+            if self.monitor is None:
+                return "invalid monitor"
+            self.monitor.set_config(config)
+        else:
+            if self.reporter is None:
+                return "invalid reporter"
+            self.reporter.set_config(config)
