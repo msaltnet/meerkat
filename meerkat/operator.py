@@ -2,8 +2,10 @@
 
 import threading
 from datetime import datetime
+import asyncio
 from .worker import Worker
 from .log_manager import LogManager
+from .monitor import Monitor
 
 
 class Operator:
@@ -12,10 +14,8 @@ class Operator:
     """
 
     def __init__(self, on_exception=None):
-        self.monitor = None
-        self.reporter = None
-        self.alarm_handler = None
-        self.analyzer = None
+        self.monitor = {}
+        self.alarm_cb = None
         self.is_running = False
         self.interval = 10
         self.worker = Worker("Operator-Worker")
@@ -24,22 +24,41 @@ class Operator:
         self.timer_expired_time = None
         self.timer = None
 
-    def initialize(self, monitor, reporter, alarm_handler, analyzer):
+    def set_alarm_listener(self, alarm_cb):
         """
-        monitor와 reporter를 입력받아서 시스템을 초기화
+        모니터의 응답 콜백 등록
         """
-        self.monitor = monitor
-        self.reporter = reporter
-        self.alarm_handler = alarm_handler
-        self.analyzer = analyzer
+        self.alarm_cb = alarm_cb
+
+    def register_monitor(self, monitor):
+        """
+        모니터를 등록
+        """
+
+        # if monitor is not instance of Monitor, do nothing
+        if not isinstance(monitor, Monitor):
+            return
+
+        # set monitor to self.monitor dictionary
+        self.monitor[monitor.NAME] = monitor
+
+    def unregister_monitor(self, monitor):
+        """
+        모니터를 제거
+        """
+
+        # if monitor is not instance of Monitor, do nothing
+        if not isinstance(monitor, Monitor):
+            return
+
+        # remove monitor from self.monitor dictionary
+        if monitor.NAME in self.monitor:
+            del self.monitor[monitor.NAME]
 
     def start(self):
         """
         모니터링 알림 시스템을 시작
         """
-        if self.monitor is None or self.reporter is None:
-            return
-
         if self.is_running is True:
             return
 
@@ -47,37 +66,50 @@ class Operator:
 
         self.logger.info("===== Start operating =====")
         self.worker.start()
-        self.worker.post_task({"runnable": self._excute_monitoring})
+        self.worker.post_task({"runnable": self.execute_checking})
 
-    def _excute_monitoring(self, task):
+    def execute_checking(self, worker_task):
         """
-        모니터링과 알림을 1회 실시
+        등록된 모니터로 모니터링을 1회 수행
         """
 
-        del task
-        self.logger.debug("monitoring is started #####################")
+        del worker_task
+        self.logger.debug("monitoring START #####################")
 
-        try:
-            target_data = self.monitor.get_info()
-            self.analyzer.put_info(target_data)
+        if len(self.monitor) == 0:
+            self.logger.debug("No monitor is registered")
+            self._start_timer()
+            return
 
-            result = self.reporter.get_report_message(target_data)
-            if result is not None:
-                self.analyzer.put_info(result)
-                self.alarm_handler(result)
+        def _on_monitoring_done(future):
+            result = future.result()
+            if self.alarm_cb is None:
+                return
+            if result is None or result["ok"] is False:
+                self.alarm_cb("Something bad happened during monitoring: {monitor.NAME}")
+            else:
+                if result["alarm"] is not None and result["alarm"]["message"] is not None:
+                    msg = result["alarm"]["message"]
+                    alarm_msg = f"{monitor.NAME} - {msg}"
+                    self.alarm_cb(alarm_msg)
 
-        except Exception as exc:
-            if self.on_exception is not None:
-                self.on_exception("Something bad happened during trading")
-            raise RuntimeError("Something bad happened during trading") from exc
+        loop = asyncio.new_event_loop()
+        tasks = []
+        for monitor in self.monitor.values():
+            task = loop.create_task(monitor.do_check())
+            task.add_done_callback(_on_monitoring_done)
+            tasks.append(task)
+        loop.run_until_complete(asyncio.wait(tasks))
+        loop.close()
         self._start_timer()
+        self.logger.debug("monitoring END #####################")
 
     def _start_timer(self):
         """설정된 간격의 시간이 지난 후 Worker가 모니터링을 수행하도록 타이머 설정"""
 
         def on_timer_expired():
             self.timer_expired_time = datetime.now()
-            self.worker.post_task({"runnable": self._excute_monitoring})
+            self.worker.post_task({"runnable": self.execute_checking})
 
         adjusted_interval = self.interval
         if self.interval > 1 and self.timer_expired_time is not None:
@@ -104,42 +136,60 @@ class Operator:
     def get_heartbeat(self):
         """
         모니터링이 정상적으로 진행되고 있는지 확인
-
-        return : True or False
         """
-        if self.monitor is None:
-            return False
+        if len(self.monitor) == 0:
+            self.alarm_cb("No monitor is registered")
+            return
 
-        return self.monitor.get_heartbeat()
+        if self.is_running is False:
+            self.alarm_cb("Operator is not running")
+            return
 
-    def get_config_info(self, monitor_config=True):
-        """
-        모니터와 리포터의 변경할 수 있는 설정 값의 설정 정보를 조회
-        monitor_config이 True이면 모니터의 설정 정보를 조회
-        monitor_config이 False이면 리포터의 설정 정보를 조회
-        return: 설정 정보를 담은 문자열
-        """
-        if monitor_config:
-            if self.monitor is None:
-                return "invalid monitor"
-            return self.monitor.get_config_info()
-        else:
-            if self.reporter is None:
-                return "invalid reporter"
-            return self.reporter.get_config_info()
+        self.worker.post_task({"runnable": self._get_heartbeat})
 
-    def set_config(self, config, monitor_config=True):
-        """
-        모니터와 리포터의 변경할 수 있는 설정 값의 설정
-        monitor_config이 True이면 모니터의 set_config를 호출
-        monitor_config이 False이면 리포터의 set_config를 호출
-        """
+    def _get_heartbeat(self, worker_task):
+        del worker_task
+        self.logger.debug("heartbeat START #####################")
 
-        if monitor_config:
-            if self.monitor is None:
-                return "invalid monitor"
-            self.monitor.set_config(config)
-        else:
-            if self.reporter is None:
-                return "invalid reporter"
-            self.reporter.set_config(config)
+        def _on_check_heartbeat_done(future):
+            result = future.result()
+            if self.alarm_cb is None:
+                return
+            if result is None or result["ok"] is False:
+                self.alarm_cb("Something bad happened during heartbeat: {monitor.NAME}")
+            else:
+                msg = result["message"]
+                alarm_msg = f"{monitor.NAME} - {msg}"
+                self.alarm_cb(alarm_msg)
+
+        loop = asyncio.new_event_loop()
+        tasks = []
+        for monitor in self.monitor.values():
+            task = loop.create_task(monitor.get_heartbeat())
+            task.add_done_callback(_on_check_heartbeat_done)
+            tasks.append(task)
+        loop.run_until_complete(asyncio.wait(tasks))
+        loop.close()
+        self.logger.debug("heartbeat END #####################")
+
+    def get_monitor_list(self):
+        """
+        등록된 모니터의 리스트를 반환
+
+        return : list
+        """
+        return list(self.monitor.keys())
+
+    def get_analysis_result(self, monitor_name):
+        """
+        모니터링 결과를 반환
+
+        return: {
+            message: 모니터링 결과
+            image_file: 모니터링 결과 이미지 파일
+        }
+        """
+        if monitor_name not in self.monitor:
+            return None
+
+        return self.monitor[monitor_name].get_analysis_result()

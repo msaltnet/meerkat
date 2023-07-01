@@ -4,41 +4,32 @@
 ![language](https://img.shields.io/github/languages/top/msaltnet/meerkat.svg?style=flat-square&colorB=green)
 [![codecov](https://codecov.io/gh/msaltnet/meerkat/branch/main/graph/badge.svg?token=BRCH1W1YSN)](https://codecov.io/gh/msaltnet/meerkat)
 
-monitoring and reporting
+monitoring and alarm system
 
 ## Usecase
-1. 모니터링을 시작 / 정지 가능하다
+1. 모니터링을 시작/정지 가능하다
 2. 모니터링하는 정보를 바탕으로 알림을 생성하는 기능을 켜고 끌수 있다
-3. 모니터링 정보와 알리 정보를 저장 및 보고서 생성
-4. 모니터/리포터의 변경할 수 있는 설정 정보 조회가 가능하다 (예, 모니터링 날짜)
-5. 모니터/리포터의 설정 값을 변경할 수 있다 (에, 모니터링 날짜)
+3. 여러 모니터링을 동시에 사용할 수 있다
+4. 모니터링 정보와 알림 정보를 저장 및 보고서 생성
 
 monitor
-- get_info, 현재 모니터링하고 있는 정보
-- get_heartbeat, 현재 모니터링이 제대로 되고 있는 지
-- set_config, 모니터링 설정
-- get_config_info, 모니터링 설정 정보
-
-reporter
-- get_report_message
-- set_config, 모니터링 설정
-- get_config_info, 모니터링 설정 정보
-
-analyzer
-- put_info
-- make_report
+- do_check, 현재 설정된 모니터링을 수행, 반환 값으로 알림 생성
+- get_heartbeat, 현재 모니터링이 제대로 되고 있는 지 확인
+- set_alarm, 알림을 켜고 끌 수 있다
+- get_analisys, 모니터링 결과를 반환한다
 
 operator
-- initialize
-- start / stop
-- get_heartbeat
-- excute_monitoring
-- get_config_info
-- set_config
+- set_alarm_listener, 모니터의 응답 콜백 등록
+- register_monitor, 모니터 등록
+- unregister_monitor, 모니터 제거
+- start/stop, 모니터링 시작/정지
+- get_heartbeat, 모니터링 상태 확인
+- excute_checking, 모니터링 수행
+- get_monitor_list, 등록된 모니터 목록 조회
+- get_analisys, 모니터링 결과 조회
 
 controller
-- 시작 / 정지
+- 시작/정지
+- 모니터 목록 조회
 - 상태 조회
 - 결과 조회
-- 설정 변경
-- 설정 변경 정보 조회

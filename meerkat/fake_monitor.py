@@ -12,24 +12,27 @@ class FakeMonitor(Monitor):
     AVAILABLE_TYPE = ["A", "B", "C"]
 
     def __init__(self) -> None:
-        self.idx = 0
-        self.type = "A"
+        self.is_running = False
+        self.alarm_on = False
         self.logger = LogManager.get_logger("FakeMonitor")
 
-    def get_monitor_info(self) -> str:
+    async def do_check(self) -> dict:
         """
-        현재 모니터링하고 있는 정보를 텍스트로 전달
+        현재 설정된 모니터링을 수행, 반환 값으로 알림 생성
+        return: {
+            "ok": True,
+            "alarm": {
+                "message": 알림 메시지
+            }
+        }
         """
-        return "Monitor를 간단하게 구현한 Fake 객체입니다."
+        response = {"ok": True}
+        if self.alarm_on:
+            response["alarm"] = {"message": "Fake Monitor Alarm"}
 
-    def get_data(self) -> str:
-        """
-        현재 모니터링하고 있는 대상 데이터를 텍스트로 전달
-        """
-        self.idx += 1
-        return f"{self.idx}번째 데이터 입니다"
+        return response
 
-    def get_heartbeat(self) -> str:
+    async def get_heartbeat(self) -> str:
         """
         현재 모니터링이 제대로 되고 있는 지 확인해서 결과 전달
 
@@ -39,22 +42,32 @@ class FakeMonitor(Monitor):
             "message": 확인 결과 문자
         }
         """
-        return {"ok": True, "message": "정상적으로 모니터링 되고 있습니다"}
+        response = {"ok": True}
+        if self.alarm_on:
+            response["message"] = "정상적으로 모니터링 되고 있습니다. 알림이 켜져 있습니다"
+        else:
+            response["ok"] = False
+            response["message"] = "정상적으로 모니터링 되고 있습니다. 알림이 꺼져 있습니다"
+        return response
 
-    def set_config(self, config):
+    def set_alarm(self, on):
         """
-        모니터에서 변경할 수 있는 설정 값의 설정
+        알림을 켜고 끌 수 있다
+        on: True, False on/off
         """
-        try:
-            if config["type"] in self.AVAILABLE_TYPE:
-                self.type = config["type"]
-        except (TypeError, KeyError) as error:
-            self.logger.info(f"Invalid config {error}")
+        if on:
+            self.alarm_on = True
+            self.logger.info("알림이 켜졌습니다")
+        else:
+            self.alarm_on = False
+            self.logger.info("알림이 꺼졌습니다")
 
-    def get_config_info(self):
+    def get_analysis(self) -> dict:
         """
-        모니터에서 변경할 수 있는 설정 값의 정보
+        모니터링 결과를 반환한다
+        return: {
+            message: 모니터링 결과
+            image_file: 모니터링 결과 이미지 파일
+        }
         """
-        type_string = ", ".join(self.AVAILABLE_TYPE)
-
-        return f"type을 {type_string} 중 하나로 설정 할 수 있습니다. 예. {{'type': 'A' }}"
+        return {"message": "Fake Monitor Analysis", "image_file": None}

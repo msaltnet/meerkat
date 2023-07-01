@@ -1,6 +1,6 @@
 import time
 import unittest
-from meerkat import Operator
+from meerkat import Operator, FakeMonitor
 from unittest.mock import *
 
 
@@ -11,171 +11,261 @@ class OperatorTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_get_monitor_info_return_correct_info(self):
-        """Test get_monitor_info() return correct info"""
+    def test_set_alarm_listener_should_set_alarm_cb(self):
+        """Test set_alarm_listener() should set alarm_cb"""
 
         operator = Operator()
-        operator.initialize("mango", "orange", "handler", "apple")
-        self.assertEqual("mango", operator.monitor)
-        self.assertEqual("orange", operator.reporter)
-        self.assertEqual("handler", operator.alarm_handler)
-        self.assertEqual("apple", operator.analyzer)
+        operator.set_alarm_listener("alarm_cb")
+        self.assertEqual("alarm_cb", operator.alarm_cb)
 
-    def test_start_should_call_monitor_get_info_and_report_get_report_message(self):
-        """Test start() should call monitor.get_info() and report.get_report_message()"""
+    def test_register_monitor_should_register_monitor(self):
+        """Test register_monitor() should register monitor"""
 
         operator = Operator()
-        monitor_mock = MagicMock()
-        monitor_mock.get_info = MagicMock(return_value="banana")
-        reporter_mock = MagicMock()
-        reporter_mock.get_report_message = MagicMock(return_value=None)
-        analyzer_mock = MagicMock()
-        analyzer_mock.put_info = MagicMock()
-        alarm_handler = MagicMock()
+        monitor = FakeMonitor()
+        monitor.NAME = "mango"
+        operator.register_monitor(monitor)
+        self.assertEqual(operator.monitor["mango"], monitor)
+
+    def test_unregister_monitor_should_unregister_monitor(self):
+        """Test unregister_monitor() should unregister monitor"""
+
+        operator = Operator()
+        monitor = FakeMonitor()
+        monitor.NAME = "mango"
+        operator.register_monitor(monitor)
+        operator.unregister_monitor(monitor)
+        self.assertEqual("mango" not in operator.monitor, True)
+
+    def test_get_monitor_list_should_return_monitor_list(self):
+        """Test get_monitor_list() should return monitor list"""
+
+        operator = Operator()
+        monitor = FakeMonitor()
+        monitor.NAME = "mango"
+        operator.register_monitor(monitor)
+        monitor2 = FakeMonitor()
+        monitor2.NAME = "orange"
+        operator.register_monitor(monitor2)
+        self.assertEqual(operator.get_monitor_list(), ["mango", "orange"])
+
+    def test_get_analysis_result_should_return_analyzer(self):
+        """Test get_analysis_result() should return analyzer"""
+
+        operator = Operator()
+        monitor = FakeMonitor()
+        monitor.NAME = "mango"
+        monitor.get_analysis_result = MagicMock(return_value="mango_analysis_result")
+        operator.register_monitor(monitor)
+        self.assertEqual(operator.get_analysis_result("mango"), "mango_analysis_result")
+        monitor.get_analysis_result.assert_called()
+
+    def test_get_analysis_result_should_return_none_when_monitor_not_exist(self):
+        """Test get_analysis_result() should return None when monitor not exist"""
+
+        operator = Operator()
+        self.assertEqual(operator.get_analysis_result("mango"), None)
+
+
+class OperatorStartStopTests(unittest.TestCase):
+    def test_start_should_call_worker_start_and_post_first_task(self):
+        """Test start() should call worker.start() and post first task"""
+
+        operator = Operator()
+        operator.worker = MagicMock()
+        operator.start()
+        operator.worker.start.assert_called()
+        operator.worker.post_task.assert_called()
+        operator.stop()
+
+    def test_start_should_not_call_worker_start_when_already_running(self):
+        """Test start() should not call worker.start() when already running"""
+
+        operator = Operator()
+        operator.worker = MagicMock()
+        operator.is_running = True
+        operator.start()
+        operator.worker.start.assert_not_called()
+        operator.worker.post_task.assert_not_called()
+        operator.stop()
+
+    def test_start_should_call_monitor_do_check_and_alarm_cb_with_correct_msg(self):
+        """Test start() should call monitor.do_check() and alarm_cb with correct msg"""
+
+        operator = Operator()
+        monitor_mock = FakeMonitor()
+        monitor_mock.do_check = AsyncMock(
+            return_value={
+                "ok": True,
+                "alarm": {
+                    "message": "alert_orange",
+                },
+            }
+        )
+        alarm_listener_mock = MagicMock()
+        operator.set_alarm_listener(alarm_listener_mock)
+        operator.register_monitor(monitor_mock)
         operator.interval = 1
-        operator.initialize(monitor_mock, reporter_mock, alarm_handler, analyzer_mock)
+        self.assertFalse(monitor_mock.do_check.called)
         operator.start()
         self.assertTrue(operator.is_running)
 
         time.sleep(1)
-        monitor_mock.get_info.assert_called()
-        analyzer_mock.put_info.assert_called_with("banana")
-        reporter_mock.get_report_message.assert_called_with("banana")
-        alarm_handler.assert_not_called()
-        self.assertEqual(1, len(monitor_mock.get_info.call_args_list))
-        self.assertEqual(1, len(reporter_mock.get_report_message.call_args_list))
-        self.assertEqual(1, len(analyzer_mock.put_info.call_args_list))
+        self.assertTrue(monitor_mock.do_check.called)
+        alarm_listener_mock.assert_called()
+        self.assertEqual(1, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(1, len(alarm_listener_mock.call_args_list))
 
         time.sleep(1)
-        self.assertEqual(2, len(monitor_mock.get_info.call_args_list))
-        self.assertEqual(2, len(reporter_mock.get_report_message.call_args_list))
-        self.assertEqual(2, len(analyzer_mock.put_info.call_args_list))
+        self.assertEqual(2, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(2, len(alarm_listener_mock.call_args_list))
 
         time.sleep(1)
-        self.assertEqual(3, len(monitor_mock.get_info.call_args_list))
-        self.assertEqual(3, len(reporter_mock.get_report_message.call_args_list))
-        self.assertEqual(3, len(analyzer_mock.put_info.call_args_list))
+        self.assertEqual(3, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(3, len(alarm_listener_mock.call_args_list))
         operator.stop()
+
         time.sleep(1)
         self.assertFalse(operator.is_running)
 
-    def test_start_should_call_alarm_handler_when_not_None_result_is_returned(self):
-        """Test start() should call alarm_handler when not None result is returned"""
+    def test_start_should_call_alarm_cb_when_None_result_is_returned(self):
+        """Test start() should call alarm_cb when None result is returned"""
 
         operator = Operator()
-        monitor_mock = MagicMock()
-        monitor_mock.get_info = MagicMock(return_value="banana")
-        reporter_mock = MagicMock()
-        reporter_mock.get_report_message = MagicMock(return_value="alert_orange")
-        analyzer_mock = MagicMock()
-        analyzer_mock.put_info = MagicMock()
-        alarm_handler = MagicMock()
+        monitor_mock = FakeMonitor()
+        monitor_mock.do_check = AsyncMock(return_value=None)
+        alarm_listener_mock = MagicMock()
+        operator.set_alarm_listener(alarm_listener_mock)
+        operator.register_monitor(monitor_mock)
         operator.interval = 1
-        operator.initialize(monitor_mock, reporter_mock, alarm_handler, analyzer_mock)
+        self.assertFalse(monitor_mock.do_check.called)
         operator.start()
         self.assertTrue(operator.is_running)
 
         time.sleep(1)
-        monitor_mock.get_info.assert_called()
-        analyzer_mock.put_info.assert_called_with("alert_orange")
-        reporter_mock.get_report_message.assert_called_with("banana")
-        alarm_handler.assert_called_with("alert_orange")
-
-        self.assertEqual(1, len(monitor_mock.get_info.call_args_list))
-        self.assertEqual(1, len(reporter_mock.get_report_message.call_args_list))
-        self.assertEqual(2, len(analyzer_mock.put_info.call_args_list))
+        self.assertTrue(monitor_mock.do_check.called)
+        alarm_listener_mock.assert_called()
+        self.assertEqual(1, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(1, len(alarm_listener_mock.call_args_list))
 
         time.sleep(1)
-        self.assertEqual(2, len(monitor_mock.get_info.call_args_list))
-        self.assertEqual(2, len(reporter_mock.get_report_message.call_args_list))
-        self.assertEqual(4, len(analyzer_mock.put_info.call_args_list))
+        self.assertEqual(2, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(2, len(alarm_listener_mock.call_args_list))
 
         time.sleep(1)
-        self.assertEqual(3, len(monitor_mock.get_info.call_args_list))
-        self.assertEqual(3, len(reporter_mock.get_report_message.call_args_list))
-        self.assertEqual(6, len(analyzer_mock.put_info.call_args_list))
+        self.assertEqual(3, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(3, len(alarm_listener_mock.call_args_list))
         operator.stop()
+
         time.sleep(1)
         self.assertFalse(operator.is_running)
 
-    def test_get_heartbeat_should_return_heartbeat_state(self):
-        """Test get_heartbeat() should return heartbeat_state"""
-
-        mock_monitor = MagicMock()
-        mock_monitor.get_heartbeat = MagicMock(return_value="mango")
-        operator = Operator()
-        operator.initialize(mock_monitor, "orange", "handler", "apple")
-        self.assertEqual("mango", operator.get_heartbeat())
-        mock_monitor.get_heartbeat.assert_called()
-
-    def test_get_heartbeat_should_return_False_when_operator_is_NOT_initialized(self):
-        """Test get_heartbeat() should return False when operator is NOT initialized"""
+    def test_stop_should_not_call_monitor_do_check_and_alarm_cb_when_after_stop(self):
+        """Test stop() should not call monitor.do_check() and alarm_cb when after stop"""
 
         operator = Operator()
-        self.assertFalse(operator.get_heartbeat())
+        monitor_mock = FakeMonitor()
+        monitor_mock.do_check = AsyncMock(
+            return_value={
+                "ok": True,
+                "alarm": {
+                    "message": "alert_orange",
+                },
+            }
+        )
+        alarm_listener_mock = MagicMock()
+        operator.set_alarm_listener(alarm_listener_mock)
+        operator.register_monitor(monitor_mock)
+        operator.interval = 1
+        self.assertFalse(monitor_mock.do_check.called)
+        operator.start()
+        self.assertTrue(operator.is_running)
 
-    def test_get_config_info_should_return_config_info_of_monitor_when_monitor_config_True(self):
-        """Test get_config_info() should return config_info when monitor.config is True"""
+        time.sleep(1)
+        self.assertTrue(monitor_mock.do_check.called)
+        alarm_listener_mock.assert_called()
+        self.assertEqual(1, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(1, len(alarm_listener_mock.call_args_list))
 
-        mock_monitor = MagicMock()
-        mock_monitor.get_config_info = MagicMock(return_value="mango")
-        mock_reporter = MagicMock()
-        mock_reporter.get_config_info = MagicMock(return_value="orange")
-        operator = Operator()
-        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
-        self.assertEqual("mango", operator.get_config_info(monitor_config=True))
-        mock_monitor.get_config_info.assert_called()
-        mock_reporter.get_config_info.assert_not_called()
+        operator.stop()
+        self.assertFalse(operator.is_running)
+        time.sleep(1)
+        self.assertEqual(1, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(1, len(alarm_listener_mock.call_args_list))
 
-    def test_get_config_info_should_return_config_info_of_reporter_when_monitor_config_False(self):
-        """Test get_config_info() should return config_info when monitor.config is False"""
+        time.sleep(1)
+        self.assertEqual(1, len(monitor_mock.do_check.call_args_list))
+        self.assertEqual(1, len(alarm_listener_mock.call_args_list))
 
-        mock_monitor = MagicMock()
-        mock_monitor.get_config_info = MagicMock(return_value="mango")
-        mock_reporter = MagicMock()
-        mock_reporter.get_config_info = MagicMock(return_value="orange")
-        operator = Operator()
-        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
-        self.assertEqual("orange", operator.get_config_info(monitor_config=False))
-        mock_monitor.get_config_info.assert_not_called()
-        mock_reporter.get_config_info.assert_called()
+        time.sleep(1)
 
-    def test_get_config_info_should_return_invalid_state_when_operator_is_NOT_initialized(self):
-        """Test get_config_info() should return False when operator is NOT initialized"""
 
-        operator = Operator()
-        self.assertEqual("invalid monitor", operator.get_config_info(monitor_config=True))
-        self.assertEqual("invalid reporter", operator.get_config_info(monitor_config=False))
-
-    def test_set_config_should_set_monitor_config_when_monitor_config_True(self):
-        """Test set_config() should set monitor.config when monitor_config is True"""
-
-        mock_monitor = MagicMock()
-        mock_monitor.set_config = MagicMock()
-        mock_reporter = MagicMock()
-        mock_reporter.set_config = MagicMock()
-        operator = Operator()
-        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
-        operator.set_config("mango", monitor_config=True)
-        mock_monitor.set_config.assert_called_with("mango")
-        mock_reporter.set_config.assert_not_called()
-
-    def test_set_config_should_set_reportor_config_when_monitor_config_False(self):
-        """Test set_config() should set reporter.config when monitor_config is False"""
-
-        mock_monitor = MagicMock()
-        mock_monitor.set_config = MagicMock()
-        mock_reporter = MagicMock()
-        mock_reporter.set_config = MagicMock()
-        operator = Operator()
-        operator.initialize(mock_monitor, mock_reporter, "handler", "apple")
-        operator.set_config("mango", monitor_config=False)
-        mock_monitor.set_config.assert_not_called()
-        mock_reporter.set_config.assert_called_with("mango")
-
-    def test_set_config_should_return_invalid_state_when_operator_is_NOT_initialized(self):
-        """Test set_config() should return False when operator is NOT initialized"""
+class OperatorHeartbeatTests(unittest.TestCase):
+    def test_get_heartbeat_should_call_monitor_get_heartbeat_and_alarm_cb_with_correct_msg(self):
+        """Test get_heartbeat() should call monitor.get_heartbeat() and alarm_cb with correct msg"""
 
         operator = Operator()
-        self.assertEqual("invalid monitor", operator.set_config("mango", monitor_config=True))
-        self.assertEqual("invalid reporter", operator.set_config("mango", monitor_config=False))
+        monitor_mock = FakeMonitor()
+        monitor_mock.get_heartbeat = AsyncMock(
+            return_value={
+                "ok": True,
+                "message": "heartbeat_orange",
+            }
+        )
+        monitor_mock.do_check = AsyncMock(return_value=None)
+        alarm_listener_mock = MagicMock()
+        operator.set_alarm_listener(alarm_listener_mock)
+        operator.register_monitor(monitor_mock)
+        operator.interval = 1
+        operator.start()
+        self.assertFalse(monitor_mock.get_heartbeat.called)
+        operator.get_heartbeat()
+
+        time.sleep(1)
+        self.assertTrue(monitor_mock.get_heartbeat.called)
+        alarm_listener_mock.assert_called()
+        self.assertEqual(1, len(monitor_mock.get_heartbeat.call_args_list))
+
+        time.sleep(1)
+        self.assertEqual(1, len(monitor_mock.get_heartbeat.call_args_list))
+        operator.stop()
+
+    def test_get_heartbeat_should_not_call_get_heartbeat_when_not_started(self):
+        """Test get_heartbeat() should not call get_heartbeat() when not started"""
+
+        operator = Operator()
+        monitor_mock = FakeMonitor()
+        monitor_mock.get_heartbeat = AsyncMock(
+            return_value={
+                "ok": True,
+                "message": "heartbeat_orange",
+            }
+        )
+        monitor_mock.do_check = AsyncMock(return_value=None)
+        alarm_listener_mock = MagicMock()
+        operator.set_alarm_listener(alarm_listener_mock)
+        operator.register_monitor(monitor_mock)
+        operator.interval = 1
+        self.assertFalse(monitor_mock.get_heartbeat.called)
+        operator.get_heartbeat()
+        self.assertFalse(monitor_mock.get_heartbeat.called)
+
+    def test_get_heartbeat_should_not_call_get_heartbeat_when_monitor_is_not_registered(self):
+        """Test get_heartbeat() should not call get_heartbeat() when monitor is not registered"""
+
+        operator = Operator()
+        monitor_mock = FakeMonitor()
+        monitor_mock.get_heartbeat = AsyncMock(
+            return_value={
+                "ok": True,
+                "message": "heartbeat_orange",
+            }
+        )
+        monitor_mock.do_check = AsyncMock(return_value=None)
+        alarm_listener_mock = MagicMock()
+        operator.set_alarm_listener(alarm_listener_mock)
+        operator.interval = 1
+        operator.start()
+        self.assertFalse(monitor_mock.get_heartbeat.called)
+        operator.get_heartbeat()
+        self.assertFalse(monitor_mock.get_heartbeat.called)
