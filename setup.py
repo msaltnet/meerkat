@@ -43,7 +43,7 @@ setup(
     packages=find_packages(),
     classifiers=[
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.8",
     ],
     install_requires=REQUIRED,
     extras_require={"dev": ["coverage"]},

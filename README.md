@@ -27,9 +27,11 @@ operator
 - excute_checking, 모니터링 수행
 - get_monitor_list, 등록된 모니터 목록 조회
 - get_analisys, 모니터링 결과 조회
+- set_alarm, 모니터링 결과에 따른 알림 설정
 
 controller
-- 시작/정지
-- 모니터 목록 조회
-- 상태 조회
-- 결과 조회
+- start/stop, 모니터링 시작/정지, 개별 수행
+- show_monitor_list, 등록된 모니터 목록 조회
+- show_all_monitor_list, 가용한 모든 모니터 목록 조회
+- show_status, 상태 조회
+- show_result, 결과 조회

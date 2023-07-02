@@ -5,6 +5,7 @@ Description for Package
 from .worker import Worker
 from .log_manager import LogManager
 from .fake_monitor import FakeMonitor
+from .monitor_factory import MonitorFactory
 from .operator import Operator
 
 __all__ = ["Worker", "LogManager", "FakeMonitor", "Operator"]

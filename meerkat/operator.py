@@ -193,3 +193,14 @@ class Operator:
             return None
 
         return self.monitor[monitor_name].get_analysis_result()
+
+    def set_alarm(self, monitor_name, on_off):
+        """
+        모니터링 알림 설정
+
+        on_off: True or False
+        """
+        if monitor_name not in self.monitor:
+            return
+
+        self.monitor[monitor_name].set_alarm(on_off)

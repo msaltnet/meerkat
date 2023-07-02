@@ -9,6 +9,7 @@ class Monitor(metaclass=ABCMeta):
     """
 
     NAME = "Unique Monitor Name"
+    CODE = "FMC"
 
     @abstractmethod
     async def do_check(self) -> dict:
