@@ -194,7 +194,7 @@ class Operator:
 
         return self.monitor[monitor_name].get_analysis_result()
 
-    def set_alarm(self, monitor_name, on_off):
+    def set_alarm(self, monitor_name, on_off=True):
         """
         모니터링 알림 설정
 

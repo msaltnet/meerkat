@@ -65,6 +65,31 @@ class OperatorTests(unittest.TestCase):
         operator = Operator()
         self.assertEqual(operator.get_analysis_result("mango"), None)
 
+    def test_set_alarm_should_call_set_alarm_of_all_registered_monitor(self):
+        """Test set_alarm() should call set_alarm() of all registered monitor"""
+
+        operator = Operator()
+        monitor = FakeMonitor()
+        monitor.NAME = "mango"
+        monitor.set_alarm = MagicMock()
+        operator.register_monitor(monitor)
+        operator.set_alarm("mango", True)
+        monitor.set_alarm.assert_called_with(True)
+
+        operator.set_alarm("mango", False)
+        monitor.set_alarm.assert_called_with(False)
+
+    def test_set_alarm_should_not_call_set_alarm_when_monitor_not_exist(self):
+        """Test set_alarm() should not call set_alarm() when monitor not exist"""
+
+        operator = Operator()
+        monitor = FakeMonitor()
+        monitor.NAME = "mango"
+        monitor.set_alarm = MagicMock()
+        operator.register_monitor(monitor)
+        operator.set_alarm("orange", True)
+        monitor.set_alarm.assert_not_called()
+
 
 class OperatorStartStopTests(unittest.TestCase):
     def test_start_should_call_worker_start_and_post_first_task(self):
