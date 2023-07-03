@@ -40,7 +40,7 @@ class Operator:
             return
 
         # set monitor to self.monitor dictionary
-        self.monitor[monitor.NAME] = monitor
+        self.monitor[monitor.CODE] = monitor
 
     def unregister_monitor(self, monitor):
         """
@@ -52,8 +52,8 @@ class Operator:
             return
 
         # remove monitor from self.monitor dictionary
-        if monitor.NAME in self.monitor:
-            del self.monitor[monitor.NAME]
+        if monitor.CODE in self.monitor:
+            del self.monitor[monitor.CODE]
 
     def start(self):
         """
@@ -90,7 +90,7 @@ class Operator:
             else:
                 if result["alarm"] is not None and result["alarm"]["message"] is not None:
                     msg = result["alarm"]["message"]
-                    alarm_msg = f"{monitor.NAME} - {msg}"
+                    alarm_msg = f"{monitor.CODE} - {msg}"
                     self.alarm_cb(alarm_msg)
 
         loop = asyncio.new_event_loop()
@@ -180,7 +180,7 @@ class Operator:
         """
         return list(self.monitor.keys())
 
-    def get_analysis_result(self, monitor_name):
+    def get_analysis_result(self, monitor_code):
         """
         모니터링 결과를 반환
 
@@ -189,18 +189,18 @@ class Operator:
             image_file: 모니터링 결과 이미지 파일
         }
         """
-        if monitor_name not in self.monitor:
+        if monitor_code not in self.monitor:
             return None
 
-        return self.monitor[monitor_name].get_analysis_result()
+        return self.monitor[monitor_code].get_analysis_result()
 
-    def set_alarm(self, monitor_name, on_off=True):
+    def set_alarm(self, monitor_code, on_off=True):
         """
         모니터링 알림 설정
 
         on_off: True or False
         """
-        if monitor_name not in self.monitor:
+        if monitor_code not in self.monitor:
             return
 
-        self.monitor[monitor_name].set_alarm(on_off)
+        self.monitor[monitor_code].set_alarm(on_off)

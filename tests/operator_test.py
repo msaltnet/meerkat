@@ -22,7 +22,7 @@ class OperatorTests(unittest.TestCase):
 
         operator = Operator()
         monitor = FakeMonitor()
-        monitor.NAME = "mango"
+        monitor.CODE = "mango"
         operator.register_monitor(monitor)
         self.assertEqual(operator.monitor["mango"], monitor)
 
@@ -31,7 +31,7 @@ class OperatorTests(unittest.TestCase):
 
         operator = Operator()
         monitor = FakeMonitor()
-        monitor.NAME = "mango"
+        monitor.CODE = "mango"
         operator.register_monitor(monitor)
         operator.unregister_monitor(monitor)
         self.assertEqual("mango" not in operator.monitor, True)
@@ -41,10 +41,10 @@ class OperatorTests(unittest.TestCase):
 
         operator = Operator()
         monitor = FakeMonitor()
-        monitor.NAME = "mango"
+        monitor.CODE = "mango"
         operator.register_monitor(monitor)
         monitor2 = FakeMonitor()
-        monitor2.NAME = "orange"
+        monitor2.CODE = "orange"
         operator.register_monitor(monitor2)
         self.assertEqual(operator.get_monitor_list(), ["mango", "orange"])
 
@@ -53,7 +53,7 @@ class OperatorTests(unittest.TestCase):
 
         operator = Operator()
         monitor = FakeMonitor()
-        monitor.NAME = "mango"
+        monitor.CODE = "mango"
         monitor.get_analysis_result = MagicMock(return_value="mango_analysis_result")
         operator.register_monitor(monitor)
         self.assertEqual(operator.get_analysis_result("mango"), "mango_analysis_result")
@@ -70,7 +70,7 @@ class OperatorTests(unittest.TestCase):
 
         operator = Operator()
         monitor = FakeMonitor()
-        monitor.NAME = "mango"
+        monitor.CODE = "mango"
         monitor.set_alarm = MagicMock()
         operator.register_monitor(monitor)
         operator.set_alarm("mango", True)
@@ -84,7 +84,7 @@ class OperatorTests(unittest.TestCase):
 
         operator = Operator()
         monitor = FakeMonitor()
-        monitor.NAME = "mango"
+        monitor.CODE = "mango"
         monitor.set_alarm = MagicMock()
         operator.register_monitor(monitor)
         operator.set_alarm("orange", True)
