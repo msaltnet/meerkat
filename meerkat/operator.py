@@ -174,7 +174,7 @@ class Operator:
 
     def get_monitor_list(self):
         """
-        등록된 모니터의 리스트를 반환
+        등록된 모니터의 CODE 리스트를 반환
 
         return : list
         """
