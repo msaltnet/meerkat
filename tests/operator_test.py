@@ -33,7 +33,7 @@ class OperatorTests(unittest.TestCase):
         monitor = FakeMonitor()
         monitor.CODE = "mango"
         operator.register_monitor(monitor)
-        operator.unregister_monitor(monitor)
+        operator.unregister_monitor("mango")
         self.assertEqual("mango" not in operator.monitor, True)
 
     def test_get_monitor_list_should_return_monitor_list(self):
@@ -54,10 +54,8 @@ class OperatorTests(unittest.TestCase):
         operator = Operator()
         monitor = FakeMonitor()
         monitor.CODE = "mango"
-        monitor.get_analysis_result = MagicMock(return_value="mango_analysis_result")
         operator.register_monitor(monitor)
-        self.assertEqual(operator.get_analysis_result("mango"), "mango_analysis_result")
-        monitor.get_analysis_result.assert_called()
+        self.assertEqual(operator.get_analysis_result("mango"), {'message': 'Fake Monitor Analysis', 'image_file': None})
 
     def test_get_analysis_result_should_return_none_when_monitor_not_exist(self):
         """Test get_analysis_result() should return None when monitor not exist"""

@@ -1,5 +1,6 @@
 """Monitor 클래스의 간단한 구현체"""
 
+from datetime import datetime
 from .monitor import Monitor
 from .log_manager import LogManager
 
@@ -28,7 +29,7 @@ class FakeMonitor(Monitor):
         """
         response = {"ok": True}
         if self.alarm_on:
-            response["alarm"] = {"message": "Fake Monitor Alarm"}
+            response["alarm"] = {"message": f"Fake Monitor Alarm {datetime.now()}"}
 
         return response
 

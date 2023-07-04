@@ -239,14 +239,14 @@ class TelegramControllerFeatureTests(unittest.TestCase):
         tcb = TelegramController()
         tcb._send_text_message = MagicMock()
         tcb.main_keyboard = "banana"
-        tcb.show_all_monitor()
+        tcb.show_all_monitor("mango")
         tcb._send_text_message.assert_called_once_with(ANY, "banana")
 
     def test_start_monitoring_should_call__send_text_message_and_set_sub_process_correctly(self):
         tcb = TelegramController()
         tcb._send_text_message = MagicMock()
         tcb.all_monitor_keyboard = "banana"
-        tcb.start_monitoring()
+        tcb.start_monitoring("mango")
         tcb._send_text_message.assert_called_once_with(ANY, "banana")
         self.assertEqual(tcb.sub_process, tcb.start_monitoring_sub_process)
         self.assertEqual(tcb.sub_process_step, 1)
@@ -271,7 +271,7 @@ class TelegramControllerFeatureTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb.operator = MagicMock()
         tcb.operator.get_monitor_list.return_value = ["mango", "banana"]
-        tcb.stop_monitoring()
+        tcb.stop_monitoring("mango")
         tcb._send_text_message.assert_called_once_with(ANY, ANY)
         self.assertEqual(tcb.sub_process, tcb.stop_monitoring_sub_process)
         self.assertEqual(tcb.sub_process_step, 1)
@@ -291,7 +291,7 @@ class TelegramControllerFeatureTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb.operator = MagicMock()
         tcb.operator.get_monitor_list.return_value = ["mango", "banana"]
-        tcb.set_alarm_on()
+        tcb.set_alarm_on("mango")
         tcb._send_text_message.assert_called_once_with(ANY, ANY)
         self.assertEqual(tcb.sub_process, tcb.set_alarm_on_sub_process)
         self.assertEqual(tcb.sub_process_step, 1)
@@ -310,7 +310,7 @@ class TelegramControllerFeatureTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb.operator = MagicMock()
         tcb.operator.get_monitor_list.return_value = ["mango", "banana"]
-        tcb.set_alarm_off()
+        tcb.set_alarm_off("mango")
         tcb._send_text_message.assert_called_once_with(ANY, ANY)
         self.assertEqual(tcb.sub_process, tcb.set_alarm_off_sub_process)
         self.assertEqual(tcb.sub_process_step, 1)
@@ -328,7 +328,7 @@ class TelegramControllerFeatureTests(unittest.TestCase):
         tcb = TelegramController()
         tcb._send_text_message = MagicMock()
         tcb.operator = MagicMock()
-        tcb.check_heartbeat()
+        tcb.check_heartbeat("mango")
         tcb._send_text_message.assert_called_once_with(ANY, tcb.main_keyboard)
         tcb.operator.get_heartbeat.assert_called_once()
 
@@ -337,7 +337,7 @@ class TelegramControllerFeatureTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb.operator = MagicMock()
         tcb.operator.get_monitor_list.return_value = ["mango", "banana"]
-        tcb.get_analysis_result()
+        tcb.get_analysis_result("mango")
         tcb._send_text_message.assert_called_once_with(ANY, ANY)
 
     def test_get_analysis_result_sub_process_should_call__send_text_message_and_operator_get_analysis_result(self):
@@ -345,7 +345,7 @@ class TelegramControllerFeatureTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb.operator = MagicMock()
         tcb.operator.get_monitor_list.return_value = ["mango", "banana"]
-        tcb.operator.get_analysis_result.return_value = "mango_result"
+        tcb.operator.get_analysis_result.return_value = {"message": "mango_result"}
         tcb.get_analysis_result_sub_process("mango")
         tcb._send_text_message.assert_called_once_with("mango_result", tcb.main_keyboard)
         tcb.operator.get_analysis_result.assert_called_once_with("mango")

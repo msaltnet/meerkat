@@ -37,23 +37,26 @@ class Operator:
 
         # if monitor is not instance of Monitor, do nothing
         if not isinstance(monitor, Monitor):
+            self.logger.error(f"Invalid monitor: {monitor}")
             return
 
         # set monitor to self.monitor dictionary
         self.monitor[monitor.CODE] = monitor
+        self.logger.info(f"Register monitor: {monitor.CODE}")
 
-    def unregister_monitor(self, monitor):
+    def unregister_monitor(self, code):
         """
         모니터를 제거
         """
 
-        # if monitor is not instance of Monitor, do nothing
-        if not isinstance(monitor, Monitor):
+        # if monitor is not in monitor, do nothing
+        if code not in self.monitor:
+            self.logger.error(f"Invalid monitor: {code}")
             return
 
         # remove monitor from self.monitor dictionary
-        if monitor.CODE in self.monitor:
-            del self.monitor[monitor.CODE]
+        del self.monitor[code]
+        self.logger.info(f"Unregister monitor: {code}")
 
     def start(self):
         """
@@ -88,7 +91,7 @@ class Operator:
             if result is None or result["ok"] is False:
                 self.alarm_cb("Something bad happened during monitoring: {monitor.NAME}")
             else:
-                if result["alarm"] is not None and result["alarm"]["message"] is not None:
+                if "alarm" in result and result["alarm"] is not None and result["alarm"]["message"] is not None:
                     msg = result["alarm"]["message"]
                     alarm_msg = f"{monitor.CODE} - {msg}"
                     self.alarm_cb(alarm_msg)
@@ -156,7 +159,7 @@ class Operator:
             if self.alarm_cb is None:
                 return
             if result is None or result["ok"] is False:
-                self.alarm_cb("Something bad happened during heartbeat: {monitor.NAME}")
+                self.alarm_cb("Something bad happened during heartbeat")
             else:
                 msg = result["message"]
                 alarm_msg = f"{monitor.NAME} - {msg}"
@@ -192,7 +195,7 @@ class Operator:
         if monitor_code not in self.monitor:
             return None
 
-        return self.monitor[monitor_code].get_analysis_result()
+        return self.monitor[monitor_code].get_analysis()
 
     def set_alarm(self, monitor_code, on_off=True):
         """

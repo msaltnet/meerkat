@@ -18,7 +18,7 @@ class FakeMonitorTests(unittest.TestCase):
         monitor.set_alarm(True)
         loop = asyncio.get_event_loop()
         result = loop.run_until_complete(monitor.do_check())
-        self.assertEqual({"ok": True, "alarm": {"message": "Fake Monitor Alarm"}}, result)
+        self.assertEqual({"ok": True, "alarm": {"message": ANY}}, result)
 
         monitor.set_alarm(False)
         result = loop.run_until_complete(monitor.do_check())

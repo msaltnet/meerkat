@@ -23,11 +23,10 @@ class TelegramController:
     TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
     CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "123456"))
     POLLING_TIMEOUT = 10
-    INTERVAL = 60
+    INTERVAL_SEC = 10
     GUIDE_READY = "명령어를 입력해주세요.\n\n"
 
-    def __init__(self):
-        LogManager.set_stream_level(30)
+    def __init__(self, interval=INTERVAL_SEC):
         self.logger = LogManager.get_logger("TelegramController")
         self.post_worker = Worker("Chatbot-Post-Worker")
         self.post_worker.start()
@@ -42,6 +41,7 @@ class TelegramController:
         # meerkat variable
         self.operator = Operator()
         self.operator.set_alarm_listener(self._send_text_message)
+        self.operator.interval = interval
         self.monitor = None
         self.command_list = []
         self.all_monitor_codes = []
@@ -101,38 +101,6 @@ class TelegramController:
         for monitor_info in all_monitor_info:
             self.all_monitor_codes.append(monitor_info["code"])
         self.all_monitor_keyboard = self._make_1_n_keyboard_markup(self.all_monitor_codes)
-
-
-        # self.setup_list = [
-        #     {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000", "1000000"]},
-        #     {"guide": "거래할 화폐를 정해주세요", "keyboard": self.AVAILABLE_CURRENCY},
-        #     {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
-        #     {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average"]},
-        #     {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
-        # ]
-        # self._convert_keyboard_markup(self.setup_list)
-        # self.score_query_list = [
-        #     {
-        #         "guide": "조회할 기간을 정해주세요",
-        #         "keyboard": [
-        #             "1. 최근 6시간",
-        #             "2. 최근 12시간",
-        #             "3. 최근 24시간",
-        #             "4. 24시간 전부터 12시간",
-        #             "5. 48시간 전부터 24시간",
-        #         ],
-        #     },
-        # ]
-        # self._convert_keyboard_markup(self.score_query_list)
-
-    # @staticmethod
-    # def _convert_keyboard_markup(setup_list):
-    #     for item in setup_list:
-    #         markup = {"keyboard": []}
-    #         for key in item["keyboard"]:
-    #             markup["keyboard"].append([{"text": key}])
-    #         markup = json.dumps(markup)
-    #         item["keyboard"] = parse.quote(markup)
 
     @staticmethod
     def _make_1_n_keyboard_markup(item_list):
@@ -269,7 +237,7 @@ class TelegramController:
     def on_exception(self, msg):
         self._send_text_message(f"시스템 문제가 발생하여 모니터링이 중단되었습니다! {msg}", self.main_keyboard)
 
-    def show_all_monitor(self):
+    def show_all_monitor(self, command):
         """모든 모니터를 보여줌
         사용 가능한 모든 모니터 목록을 보여줌
         현재 사용중인 모니터는 사용중 표시
@@ -282,13 +250,13 @@ class TelegramController:
 
         monitor_info = []
         for monitor in all_monitor:
-            if monitor['name'] in active_monitor:
+            if monitor['code'] in active_monitor:
                 monitor_info.append(f"{monitor['name']}, {monitor['code']} (사용중)")
             else:
                 monitor_info.append(f"{monitor['name']}, {monitor['code']}")
         return "\n".join(monitor_info)
 
-    def start_monitoring(self):
+    def start_monitoring(self, command):
         """
         모니터링 시작, sub command로 모니터 코드를 입력받음
         """
@@ -320,7 +288,7 @@ class TelegramController:
         self.operator.start()
         self._send_text_message(f"{monitor.NAME} 모니터링을 시작(등록) 하였습니다.", self.main_keyboard)
 
-    def stop_monitoring(self):
+    def stop_monitoring(self, command):
         """
         모니터링 중지, sub command로 현재 활성화 되어 있는 모니터 코드를 입력받음
         """
@@ -354,9 +322,12 @@ class TelegramController:
             return
 
         self.operator.unregister_monitor(code)
+        if len(self.operator.get_monitor_list()) == 0:
+            self.operator.stop()
+
         self._send_text_message(f"{MonitorFactory.get_name(code)} 모니터링을 중지(제거) 하였습니다.", self.main_keyboard)
 
-    def set_alarm_on(self):
+    def set_alarm_on(self, command):
         """
         알람 설정
         """
@@ -392,7 +363,7 @@ class TelegramController:
         self.operator.set_alarm(code, on_off=True)
         self._send_text_message(f"{MonitorFactory.get_name(code)} 알림을 켰습니다.", self.main_keyboard)
 
-    def set_alarm_off(self):
+    def set_alarm_off(self, command):
         """
         알람 해제
         """
@@ -428,14 +399,14 @@ class TelegramController:
         self.operator.set_alarm(code, on_off=False)
         self._send_text_message(f"{MonitorFactory.get_name(code)} 알림을 껐습니다.", self.main_keyboard)
 
-    def check_heartbeat(self):
+    def check_heartbeat(self, command):
         """
         heartbeat 확인
         """
         self.operator.get_heartbeat()
         self._send_text_message("heartbeat 확인이 시작되었습니다.", self.main_keyboard)
 
-    def get_analysis_result(self):
+    def get_analysis_result(self, command):
         """
         분석 결과 확인
         """
@@ -469,4 +440,6 @@ class TelegramController:
             return
 
         result = self.operator.get_analysis_result(code)
-        self._send_text_message(result, self.main_keyboard)
+        if "message" in result:
+            self._send_text_message(result["message"], self.main_keyboard)
+            return

@@ -2,9 +2,10 @@
 Example)
 python -m meerkat
 """
+
 import argparse
 from argparse import RawTextHelpFormatter
-import sys
+from .telegram_controller import TelegramController
 
 if __name__ == "__main__":
     DEFAULT_MODE = 6
@@ -12,4 +13,8 @@ if __name__ == "__main__":
         description="""Monitoring and Reporting Meerkat""",
         formatter_class=RawTextHelpFormatter,
     )
-    parser.print_help()
+    parser.add_argument("--interval", help="trading tick interval (seconds)", type=int, default="10")
+
+    args = parser.parse_args()
+    tcb = TelegramController(interval=args.interval)
+    tcb.main()
