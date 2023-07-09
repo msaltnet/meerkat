@@ -10,8 +10,6 @@ class FakeMonitor(Monitor):
     Monitor 클래스의 간단한 구현체
     """
 
-    AVAILABLE_TYPE = ["A", "B", "C"]
-
     def __init__(self) -> None:
         self.is_running = False
         self.alarm_on = False
